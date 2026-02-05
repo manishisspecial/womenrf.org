@@ -5,11 +5,13 @@ import Programs from '@/components/Programs';
 
 export default function HomePage() {
   return (
-    <>
-      <Hero />
-      <Partners />
-      <ExploreImpact />
-      <Programs />
-    </>
+    <main>
+      <div className="overflow-hidden">
+        <Hero />
+        <Partners />
+        <ExploreImpact />
+        <Programs />
+      </div>
+    </main>
   );
 }

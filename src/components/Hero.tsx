@@ -2,36 +2,41 @@ import Link from 'next/link';
 
 export default function Hero() {
   return (
-    <section className="py-0 pb-0 md:py-0">
-      <div className="mx-auto grid max-w-container grid-cols-1 gap-0 md:min-h-[480px] md:grid-cols-[1fr_1fr] md:px-4 md:px-6">
-        <div className="flex flex-col justify-center bg-wrf-purple px-6 py-12 md:px-12 md:py-16">
-          <h1 className="mb-6 text-hero-headline font-bold leading-[1.15] tracking-tight text-white md:mb-8">
-            <span className="block">Empowering</span>
-            <span className="block">Women,</span>
-            <span className="block">Transforming</span>
-            <span className="block">Lives</span>
-          </h1>
-          <p className="mb-8 max-w-[520px] text-base font-normal leading-relaxed text-white/95">
-            Be part of our effort to ensure that every woman in Afghanistan
-            enjoys her fundamental rights to equality, dignity, and
-            self-determination.
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <Link
-              href="#story"
-              className="inline-flex items-center gap-2 rounded-md bg-wrf-coral px-6 py-3 text-sm font-bold text-white hover:bg-wrf-coral-light"
-            >
-              Learn Our Story <span aria-hidden>→</span>
-            </Link>
-            <Link
-              href="#programs"
-              className="inline-flex items-center gap-2 rounded-md bg-wrf-black px-6 py-3 text-sm font-bold text-white hover:opacity-90"
-            >
-              Our Programs <span aria-hidden>→</span>
-            </Link>
+    <section className="relative overflow-hidden bg-[#CCCCCC] py-20 md:py-32">
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid items-center gap-12 lg:grid-cols-2">
+          <div>
+            <div className="mb-6 inline-block bg-wrf-purple px-8 py-6">
+              <h1 className="mb-4 text-4xl font-bold leading-tight text-white lg:text-6xl">
+                Empowering Women, Transforming Lives
+              </h1>
+              <p className="text-xl leading-relaxed text-white/90">
+                Be part of our effort to ensure that every woman in Afghanistan enjoys her fundamental rights to equality, dignity, and self-determination.
+              </p>
+            </div>
+            <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+              <Link
+                href="/About"
+                className="flex items-center justify-center gap-2 rounded-none bg-wrf-coral px-8 py-4 font-semibold text-white shadow-lg transition-all duration-300 hover:opacity-90"
+              >
+                Learn Our Story
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14" />
+                  <path d="m12 5 7 7-7 7" />
+                </svg>
+              </Link>
+              <Link
+                href="/Programs"
+                className="flex items-center justify-center gap-2 rounded-none bg-wrf-black px-8 py-4 font-semibold text-white transition-all duration-300 hover:opacity-90"
+              >
+                Our Programs
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </Link>
+            </div>
           </div>
         </div>
-        <div className="min-h-[220px] bg-wrf-gray-bg md:min-h-[320px]" />
       </div>
     </section>
   );

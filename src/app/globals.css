@@ -7,7 +7,7 @@
     scroll-behavior: smooth;
   }
   body {
-    @apply bg-wrf-gray-bg text-wrf-black antialiased;
+    @apply bg-[#e5e5e5] text-wrf-black antialiased;
   }
 }
 
