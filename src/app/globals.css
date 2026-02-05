@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-wrf-gray-bg text-wrf-black antialiased;
+  }
+}
+
+/* WRF logo: W purple, R and F reddish-pink (no gradient) */
