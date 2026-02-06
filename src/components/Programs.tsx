@@ -3,7 +3,7 @@ import Link from 'next/link';
 const PROGRAMS = [
   {
     id: 'peacebuilding-social-cohesion',
-    image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&h=400&fit=crop',
+    image: '/Peacebuilding and Social Cohesion.jpg',
     alt: 'Peacebuilding and Social Cohesion',
     title: 'Peacebuilding and Social Cohesion',
     description:
@@ -12,7 +12,7 @@ const PROGRAMS = [
   },
   {
     id: 'legal-empowerment-international-accountability',
-    image: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&h=400&fit=crop',
+    image: '/Legal Empowerment & International Accountability.jpg',
     alt: 'Legal Empowerment & International Accountability',
     title: 'Legal Empowerment & International Accountability',
     description:
@@ -21,7 +21,7 @@ const PROGRAMS = [
   },
   {
     id: 'digital-transformation-open-gender-data',
-    image: 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=600&h=400&fit=crop',
+    image: '/Digital Transformation and Open Gender Data.avif',
     alt: 'Digital Transformation and Open Gender Data',
     title: 'Digital Transformation and Open Gender Data',
     description:
@@ -30,7 +30,7 @@ const PROGRAMS = [
   },
   {
     id: 'representation-advocacy',
-    image: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600&h=400&fit=crop',
+    image: '/Representation and Advocacy.jpg',
     alt: 'Representation and Advocacy',
     title: 'Representation and Advocacy',
     description:
@@ -62,7 +62,7 @@ export default function Programs() {
               <div className="h-48 w-full overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={program.image}
+                  src={encodeURI(program.image)}
                   alt={program.alt}
                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
