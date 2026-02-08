@@ -1,60 +1,90 @@
-import Link from 'next/link';
+'use client';
 
-const PROGRAMS = [
-  {
-    id: 'peacebuilding-social-cohesion',
-    image: '/Peacebuilding and Social Cohesion.jpg',
-    alt: 'Peacebuilding and Social Cohesion',
-    title: 'Peacebuilding and Social Cohesion',
-    description:
-      'Fostering dialogue, understanding, and unity across communities to build lasting peace and strengthen social bonds in conflict-affected regions.',
-    theme: 'secondary' as const,
-  },
-  {
-    id: 'legal-empowerment-international-accountability',
-    image: '/Legal Empowerment & International Accountability.jpg',
-    alt: 'Legal Empowerment & International Accountability',
-    title: 'Legal Empowerment & International Accountability',
-    description:
-      "Strengthening legal frameworks and accountability mechanisms to protect women's rights in Afghanistan and internationally.",
-    theme: 'primary' as const,
-  },
-  {
-    id: 'digital-transformation-open-gender-data',
-    image: '/Digital Transformation and Open Gender Data.avif',
-    alt: 'Digital Transformation and Open Gender Data',
-    title: 'Digital Transformation and Open Gender Data',
-    description:
-      "Women's Rights First leverages digital tools and open gender data to counter the erasure of Afghan women in real time. Through secure, survivor-led documentation, we transform raw testimonies into verified data that informs international accountability mechanisms and policy responses.",
-    theme: 'secondary' as const,
-  },
-  {
-    id: 'representation-advocacy',
-    image: '/Representation and Advocacy.jpg',
-    alt: 'Representation and Advocacy',
-    title: 'Representation and Advocacy',
-    description:
-      "Amplifying Afghan women's voices on national and international platforms, advocating for policy change and rights protection.",
-    theme: 'secondary' as const,
-  },
-];
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useTranslation } from '@/lib/TranslationContext';
+
+function getLocalePrefix(pathname: string): string {
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.length > 0 && ['en', 'fa', 'ps'].includes(segments[0])) {
+    return `/${segments[0]}`;
+  }
+  return '/en';
+}
 
 export default function Programs() {
+  const pathname = usePathname();
+  const localePrefix = getLocalePrefix(pathname);
+  const { t } = useTranslation();
+
+  const [adminData, setAdminData] = useState<Record<string, any> | null>(null);
+  useEffect(() => {
+    fetch('/api/data/programs', { cache: 'no-store' })
+      .then(r => r.json())
+      .then(d => { if (d && Object.keys(d).length > 0) setAdminData(d); })
+      .catch(() => {});
+  }, []);
+
+  const PROGRAMS = [
+    {
+      id: 'peacebuilding-social-cohesion',
+      image: '/Peacebuilding and Social Cohesion.jpg',
+      title: t('programs.peacebuilding.title'),
+      description: t('programs.peacebuilding.description'),
+      theme: 'secondary' as const,
+    },
+    {
+      id: 'legal-empowerment-international-accountability',
+      image: '/Legal Empowerment & International Accountability.jpg',
+      title: t('programs.legal.title'),
+      description: t('programs.legal.description'),
+      theme: 'primary' as const,
+    },
+    {
+      id: 'digital-transformation-open-gender-data',
+      image: '/Digital Transformation and Open Gender Data.avif',
+      title: t('programs.digital.title'),
+      description: t('programs.digital.description'),
+      theme: 'secondary' as const,
+    },
+    {
+      id: 'representation-advocacy',
+      image: '/Representation and Advocacy.jpg',
+      title: t('programs.advocacy.title'),
+      description: t('programs.advocacy.description'),
+      theme: 'secondary' as const,
+    },
+  ];
+
+  const programs: { id: string; image: string; title: string; description: string; theme: 'primary' | 'secondary' }[] = adminData?.programs?.length
+    ? adminData.programs
+        .filter((p: any) => p.status === 'active' && p.featured)
+        .slice(0, 4)
+        .map((p: any, i: number) => ({
+          id: p.slug || p.id,
+          image: p.imageUrl || PROGRAMS[i]?.image || '',
+          title: p.title,
+          description: p.shortDescription,
+          theme: i % 2 === 1 ? ('primary' as const) : ('secondary' as const),
+        }))
+    : PROGRAMS;
+
   return (
     <section id="programs" className="bg-white py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-12 text-left">
           <div className="mb-4 inline-block bg-wrf-purple px-8 py-6">
             <h2 className="text-4xl font-bold text-white">
-              Our Impact Programs
+              {t('programs.title')}
             </h2>
           </div>
           <p className="text-lg text-gray-600">
-            Transforming communities through targeted initiatives.
+            {t('programs.description')}
           </p>
         </div>
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {PROGRAMS.map((program) => (
+          {programs.map((program) => (
             <article
               key={program.id}
               className="group flex flex-col rounded-none bg-white shadow-lg transition-shadow duration-300 hover:shadow-2xl"
@@ -63,7 +93,7 @@ export default function Programs() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={encodeURI(program.image)}
-                  alt={program.alt}
+                  alt={program.title}
                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
@@ -82,14 +112,14 @@ export default function Programs() {
                 </div>
                 <div className="mt-auto">
                   <Link
-                    href={`/ProgramPage?slug=${program.id}`}
+                    href={`${localePrefix}/ProgramPage?slug=${program.id}`}
                     className={`inline-flex h-9 items-center justify-center gap-1 rounded-none px-3 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
                       program.theme === 'primary'
                         ? 'bg-white text-wrf-black hover:bg-gray-100 focus-visible:ring-wrf-black'
                         : 'bg-white text-wrf-purple hover:bg-gray-100 focus-visible:ring-wrf-purple'
                     }`}
                   >
-                    Learn More
+                    {t('programs.learnMore')}
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-2">
                       <path d="M5 12h14" />
                       <path d="m12 5 7 7-7 7" />

@@ -1,35 +1,63 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useTranslation } from '@/lib/TranslationContext';
+
+function getLocalePrefix(pathname: string): string {
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.length > 0 && ['en', 'fa', 'ps'].includes(segments[0])) {
+    return `/${segments[0]}`;
+  }
+  return '/en';
+}
 
 export default function Hero() {
+  const pathname = usePathname();
+  const localePrefix = getLocalePrefix(pathname);
+  const { t } = useTranslation();
+
+  const [adminData, setAdminData] = useState<Record<string, any> | null>(null);
+  useEffect(() => {
+    fetch('/api/data/homepage', { cache: 'no-store' })
+      .then(r => r.json())
+      .then(d => { if (d && Object.keys(d).length > 0) setAdminData(d); })
+      .catch(() => {});
+  }, []);
+
   return (
-    <section className="relative overflow-hidden bg-[#CCCCCC] py-20 md:py-32">
+    <section
+      className="relative overflow-hidden bg-[#CCCCCC] py-20 md:py-32"
+      style={adminData?.heroImageUrl ? { backgroundImage: `url(${adminData.heroImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+    >
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <div>
-            <div className="mb-6 inline-block bg-wrf-purple px-8 py-6">
+            <div className={`mb-6 inline-block ${adminData?.heroTitleBg || 'bg-wrf-purple'} px-8 py-6`}>
               <h1 className="mb-4 text-4xl font-bold leading-tight text-white lg:text-6xl">
-                Empowering Women, Transforming Lives
+                {adminData?.heroTitle || t('hero.title')}
               </h1>
               <p className="text-xl leading-relaxed text-white/90">
-                Be part of our effort to ensure that every woman in Afghanistan enjoys her fundamental rights to equality, dignity, and self-determination.
+                {adminData?.heroSubtitle || t('hero.description')}
               </p>
             </div>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               <Link
-                href="/About"
+                href={adminData?.heroButton1Link || `${localePrefix}/About`}
                 className="flex items-center justify-center gap-2 rounded-none bg-wrf-coral px-8 py-4 font-semibold text-white shadow-lg transition-all duration-300 hover:opacity-90"
               >
-                Learn Our Story
+                {adminData?.heroButton1Text || t('hero.learnStory')}
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14" />
                   <path d="m12 5 7 7-7 7" />
                 </svg>
               </Link>
               <Link
-                href="/Programs"
+                href={adminData?.heroButton2Link || `${localePrefix}/Programs`}
                 className="flex items-center justify-center gap-2 rounded-none bg-wrf-black px-8 py-4 font-semibold text-white transition-all duration-300 hover:opacity-90"
               >
-                Our Programs
+                {adminData?.heroButton2Text || t('hero.ourPrograms')}
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="m9 18 6-6-6-6" />
                 </svg>

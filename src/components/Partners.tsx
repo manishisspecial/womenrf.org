@@ -1,3 +1,7 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+
 const PARTNERS = [
   { name: 'Google', url: 'https://google.com', logo: 'https://logo.clearbit.com/google.com' },
   { name: 'Microsoft', url: 'https://microsoft.com', logo: 'https://logo.clearbit.com/microsoft.com' },
@@ -12,6 +16,16 @@ const PARTNERS = [
 ];
 
 export default function Partners() {
+  const [adminData, setAdminData] = useState<Record<string, any> | null>(null);
+  useEffect(() => {
+    fetch('/api/data/homepage', { cache: 'no-store' })
+      .then(r => r.json())
+      .then(d => { if (d && Object.keys(d).length > 0) setAdminData(d); })
+      .catch(() => {});
+  }, []);
+
+  const partners = adminData?.partnersList?.length ? adminData.partnersList : PARTNERS;
+
   return (
     <section id="partners" className="bg-white py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -26,7 +40,7 @@ export default function Partners() {
           </p>
         </div>
         <div className="grid grid-cols-2 items-center gap-8 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-          {PARTNERS.map(({ name, url, logo }) => (
+          {partners.map(({ name, url, logo }: { name: string; url: string; logo: string }) => (
             <div
               key={name}
               className="group flex items-center justify-center transition-transform duration-300 hover:scale-105"

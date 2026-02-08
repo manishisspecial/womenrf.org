@@ -1,0 +1,521 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter, usePathname, useParams } from 'next/navigation';
+import Link from 'next/link';
+import { loadAdminData, saveAdminData } from '@/lib/adminApi';
+
+const sidebarItems = [
+  { label: 'Dashboard', href: '/AdminDashboard', icon: 'house' },
+  { label: 'Homepage Settings', href: '/HomepageManagement', icon: 'layout-template' },
+  { label: 'About Page Settings', href: '/AboutManagement', icon: 'heart' },
+  { label: 'Header Settings', href: '/HeaderManagement', icon: 'layout-template' },
+  { label: 'Footer Settings', href: '/FooterManagement', icon: 'settings' },
+  { label: 'Privacy Policy', href: '/PrivacyPolicyManagement', icon: 'shield' },
+  { label: 'Page Content & SEO', href: '/PageSettingManagement', icon: 'settings2' },
+  { label: 'Site Management', href: '/SiteManagement', icon: 'globe' },
+  { label: 'Donation Management', href: '/DonationManagement', icon: 'hand-heart' },
+  { label: 'Donation Options', href: '/DonationOptionManagement', icon: 'layers' },
+  { label: 'Blog Posts', href: '/BlogPostManagement', icon: 'book-open' },
+  { label: 'Program Management', href: '/ProgramManagement', icon: 'book-open' },
+  { label: 'Testimonials', href: '/TestimonialManagement', icon: 'message-square' },
+  { label: 'Founder Management', href: '/FounderManagement', icon: 'venetian-mask' },
+  { label: 'Team Management', href: '/TeamManagement', icon: 'users' },
+  { label: 'Vacancy Management', href: '/VacancyManagement', icon: 'briefcase' },
+  { label: 'Job Applications', href: '/ApplicationManagement', icon: 'users' },
+  { label: 'Volunteer Management', href: '/VolunteerManagement', icon: 'hand-heart' },
+  { label: 'Partnership Management', href: '/PartnershipManagement', icon: 'handshake' },
+  { label: 'FAQ Management', href: '/FAQManagement', icon: 'shield' },
+  { label: 'Newsletter System', href: '/NewsletterManagement', icon: 'mail' },
+  { label: 'User Management', href: '/UserManagement', icon: 'users' },
+];
+
+const SvgGlobe = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+    <path d="M2 12h20" />
+  </svg>
+);
+
+const icons: Record<string, React.ReactNode> = {
+  globe: <SvgGlobe className="mr-3 h-5 w-5" />,
+  'log-out': (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" x2="9" y1="12" y2="12" />
+    </svg>
+  ),
+  house: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 h-5 w-5">
+      <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
+      <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    </svg>
+  ),
+  'layout-template': (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 h-5 w-5">
+      <rect width="18" height="7" x="3" y="3" rx="1" />
+      <rect width="9" height="7" x="3" y="14" rx="1" />
+      <rect width="5" height="7" x="16" y="14" rx="1" />
+    </svg>
+  ),
+  heart: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 h-5 w-5">
+      <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+    </svg>
+  ),
+  settings: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 h-5 w-5">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+    </svg>
+  ),
+  shield: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 h-5 w-5">
+      <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+    </svg>
+  ),
+  settings2: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 h-5 w-5">
+      <path d="M20 7h-9" />
+      <path d="M14 17H5" />
+      <circle cx="17" cy="17" r="3" />
+      <circle cx="7" cy="7" r="3" />
+    </svg>
+  ),
+  'hand-heart': (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 h-5 w-5">
+      <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+    </svg>
+  ),
+  layers: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 h-5 w-5">
+      <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" />
+      <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65" />
+      <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65" />
+    </svg>
+  ),
+  'book-open': (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 h-5 w-5">
+      <path d="M12 7v14" />
+      <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" />
+    </svg>
+  ),
+  'message-square': (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 h-5 w-5">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  ),
+  'venetian-mask': (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 h-5 w-5">
+      <path d="M2 12a5 5 0 0 0 5 5 8 8 0 0 1 5 2 8 8 0 0 1 5-2 5 5 0 0 0 5-5V7h-5a8 8 0 0 0-5 2 8 8 0 0 0-5-2H2Z" />
+    </svg>
+  ),
+  users: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 h-5 w-5">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  ),
+  briefcase: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 h-5 w-5">
+      <path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+      <rect width="20" height="14" x="2" y="6" rx="2" />
+    </svg>
+  ),
+  handshake: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 h-5 w-5">
+      <path d="m11 17 2 2a1 1 0 1 0 3-3" />
+      <path d="m21 3 1 11h-2" />
+      <path d="M3 4h8" />
+    </svg>
+  ),
+  mail: (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-3 h-5 w-5">
+      <rect width="20" height="16" x="2" y="4" rx="2" />
+      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+    </svg>
+  ),
+};
+
+const TABS = ['mission', 'values', 'quote', 'history', 'impact', 'team', 'links'] as const;
+const COLOR_OPTIONS = [
+  { value: 'primary', label: 'Primary (Dark)' },
+  { value: 'secondary', label: 'Secondary (Purple)' },
+  { value: 'white', label: 'White' },
+  { value: 'accent', label: 'Accent (Pink)' },
+];
+
+export default function AboutManagementPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useParams();
+  const locale = (params?.locale as string) || 'en';
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>('mission');
+
+  // Mission section state
+  const [sectionTitle, setSectionTitle] = useState('Our Mission & History');
+  const [titleBgColor, setTitleBgColor] = useState('primary');
+  const [titleTextColor, setTitleTextColor] = useState('white');
+  const [content, setContent] = useState(
+    'To empower and transform Afghan women and girls by delivering peacebuilding, accountability, and digital transformation services through locally grounded and modernized indigenous approaches.'
+  );
+  const [imageUrl, setImageUrl] = useState(
+    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=2088&q=80'
+  );
+  const [button1Text, setButton1Text] = useState('Join Our Mission');
+  const [button1Url, setButton1Url] = useState('Volunteer');
+  const [button1Color, setButton1Color] = useState('secondary');
+  const [button2Text, setButton2Text] = useState('Explore Programs');
+  const [button2Url, setButton2Url] = useState('Programs');
+  const [button2Color, setButton2Color] = useState('accent');
+  const [saveStatus, setSaveStatus] = useState<'idle'|'saving'|'saved'|'error'>('idle');
+
+  const base = `/${locale}`;
+  const isActive = (href: string) => pathname === `${base}${href}`;
+
+  useEffect(() => {
+    const auth = localStorage.getItem('wrf_admin_auth');
+    const loginTime = localStorage.getItem('wrf_admin_login_time');
+    if (auth === 'true' && loginTime) {
+      const elapsed = Date.now() - parseInt(loginTime, 10);
+      if (elapsed < 24 * 60 * 60 * 1000) {
+        setIsAuthenticated(true);
+      } else {
+        localStorage.removeItem('wrf_admin_auth');
+        localStorage.removeItem('wrf_admin_login_time');
+        router.push(`${base}/AdminLogin`);
+      }
+    } else {
+      router.push(`${base}/AdminLogin`);
+    }
+    setIsLoading(false);
+  }, [router, base]);
+
+  useEffect(() => {
+    loadAdminData<Record<string, any>>('about').then(data => {
+      if (!data) return;
+      if (data.sectionTitle !== undefined) setSectionTitle(data.sectionTitle);
+      if (data.titleBgColor !== undefined) setTitleBgColor(data.titleBgColor);
+      if (data.titleTextColor !== undefined) setTitleTextColor(data.titleTextColor);
+      if (data.content !== undefined) setContent(data.content);
+      if (data.imageUrl !== undefined) setImageUrl(data.imageUrl);
+      if (data.button1Text !== undefined) setButton1Text(data.button1Text);
+      if (data.button1Url !== undefined) setButton1Url(data.button1Url);
+      if (data.button1Color !== undefined) setButton1Color(data.button1Color);
+      if (data.button2Text !== undefined) setButton2Text(data.button2Text);
+      if (data.button2Url !== undefined) setButton2Url(data.button2Url);
+      if (data.button2Color !== undefined) setButton2Color(data.button2Color);
+    });
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('wrf_admin_auth');
+    localStorage.removeItem('wrf_admin_login_time');
+    router.push(`${base}/AdminLogin`);
+  };
+
+  const handleSave = async () => {
+    setSaveStatus('saving');
+    const data = {
+      sectionTitle, titleBgColor, titleTextColor, content, imageUrl,
+      button1Text, button1Url, button1Color,
+      button2Text, button2Url, button2Color,
+    };
+    const ok = await saveAdminData('about', data);
+    setSaveStatus(ok ? 'saved' : 'error');
+    setTimeout(() => setSaveStatus('idle'), 3000);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="text-gray-500 font-body">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) return null;
+
+  return (
+    <div className="flex">
+      <header className="bg-white shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-2xl font-heading font-bold text-primary">WRF Admin</h1>
+              <span className="text-sm text-gray-500 font-body">Women&apos;s Rights First</span>
+            </div>
+            <nav className="flex items-center space-x-6">
+              <Link href={base} className="text-gray-600 hover:text-primary transition-colors flex items-center gap-2">
+                <SvgGlobe className="w-4 h-4" />
+                View Website
+              </Link>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="text-gray-600 hover:text-red-600 transition-colors flex items-center gap-2"
+              >
+                {icons['log-out']}
+                Logout
+              </button>
+            </nav>
+          </div>
+        </div>
+      </header>
+
+      <aside className="w-64 bg-white shadow-sm min-h-screen flex-shrink-0 pt-16">
+        <nav className="mt-8">
+          <div className="px-4 mb-6">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider font-body">Management</h3>
+          </div>
+          <div className="space-y-1 px-2">
+            {sidebarItems.map((item) => (
+              <Link
+                key={item.label}
+                href={`${base}${item.href}`}
+                className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  isActive(item.href) ? 'bg-secondary text-white' : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                {icons[item.icon] || icons.house}
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </nav>
+      </aside>
+
+      <main className="flex-1 p-8 pt-24">
+        <div className="space-y-8">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-heading font-bold text-primary">About Page Management</h1>
+              <p className="text-gray-600 font-body">Manage content for the About Us page</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleSave}
+              className="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-primary-foreground hover:bg-primary/90 h-9 px-3 py-2 bg-secondary"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 mr-2">
+                <path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+                <path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" />
+                <path d="M7 3v4a1 1 0 0 0 1 1h7" />
+              </svg>
+              Save Changes
+            </button>
+            {saveStatus === 'saving' && <span className="text-sm text-gray-500 ml-3">Saving...</span>}
+            {saveStatus === 'saved' && <span className="text-sm text-green-600 ml-3">Saved successfully!</span>}
+            {saveStatus === 'error' && <span className="text-sm text-red-600 ml-3">Error saving. Try again.</span>}
+          </div>
+
+          <div className="w-full" dir="ltr">
+            <div
+              role="tablist"
+              aria-orientation="horizontal"
+              className="h-10 items-center justify-center rounded-md bg-gray-100 p-1 text-gray-600 grid w-full grid-cols-7"
+            >
+              {TABS.map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                    activeTab === tab ? 'bg-white text-gray-900 shadow-sm' : 'hover:bg-gray-200'
+                  }`}
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-2 space-y-6">
+              {activeTab === 'mission' && (
+                <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+                  <div className="flex flex-col space-y-1.5 p-6">
+                    <h3 className="text-2xl font-semibold leading-none tracking-tight flex items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-heart w-5 h-5">
+                        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                      </svg>
+                      Mission and History Section
+                    </h3>
+                  </div>
+                  <div className="p-6 pt-0 space-y-4">
+                    <div>
+                      <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Section Title</label>
+                      <input
+                        type="text"
+                        value={sectionTitle}
+                        onChange={(e) => setSectionTitle(e.target.value)}
+                        className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-base mt-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 md:text-sm"
+                      />
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium leading-none">Title BG Color</label>
+                        <select
+                          value={titleBgColor}
+                          onChange={(e) => setTitleBgColor(e.target.value)}
+                          className="flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-primary"
+                        >
+                          {COLOR_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium leading-none">Title Text Color</label>
+                        <select
+                          value={titleTextColor}
+                          onChange={(e) => setTitleTextColor(e.target.value)}
+                          className="flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-primary"
+                        >
+                          {COLOR_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium leading-none">Content (HTML enabled)</label>
+                      <textarea
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        rows={6}
+                        className="flex min-h-[80px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium leading-none">Image URL</label>
+                      <input
+                        type="url"
+                        value={imageUrl}
+                        onChange={(e) => setImageUrl(e.target.value)}
+                        className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-base mt-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 md:text-sm"
+                      />
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-6 pt-4 border-t border-gray-200">
+                      <div className="space-y-4">
+                        <h3 className="font-semibold">Button 1</h3>
+                        <div>
+                          <label className="text-sm font-medium leading-none">Text</label>
+                          <input
+                            type="text"
+                            value={button1Text}
+                            onChange={(e) => setButton1Text(e.target.value)}
+                            className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-base mt-1 focus:outline-none focus:ring-2 focus:ring-primary md:text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium leading-none">URL</label>
+                          <input
+                            type="text"
+                            value={button1Url}
+                            onChange={(e) => setButton1Url(e.target.value)}
+                            className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-base mt-1 focus:outline-none focus:ring-2 focus:ring-primary md:text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium leading-none">Color</label>
+                          <select
+                            value={button1Color}
+                            onChange={(e) => setButton1Color(e.target.value)}
+                            className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-primary"
+                          >
+                            {COLOR_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <h3 className="font-semibold">Button 2</h3>
+                        <div>
+                          <label className="text-sm font-medium leading-none">Text</label>
+                          <input
+                            type="text"
+                            value={button2Text}
+                            onChange={(e) => setButton2Text(e.target.value)}
+                            className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-base mt-1 focus:outline-none focus:ring-2 focus:ring-primary md:text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium leading-none">URL</label>
+                          <input
+                            type="text"
+                            value={button2Url}
+                            onChange={(e) => setButton2Url(e.target.value)}
+                            className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-base mt-1 focus:outline-none focus:ring-2 focus:ring-primary md:text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium leading-none">Color</label>
+                          <select
+                            value={button2Color}
+                            onChange={(e) => setButton2Color(e.target.value)}
+                            className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm mt-1 focus:outline-none focus:ring-1 focus:ring-primary"
+                          >
+                            {COLOR_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'values' && (
+                <div className="rounded-lg border bg-card p-6 shadow-sm">
+                  <p className="text-gray-600 font-body">Values section — add form fields as needed.</p>
+                </div>
+              )}
+              {activeTab === 'quote' && (
+                <div className="rounded-lg border bg-card p-6 shadow-sm">
+                  <p className="text-gray-600 font-body">Quote section — add form fields as needed.</p>
+                </div>
+              )}
+              {activeTab === 'history' && (
+                <div className="rounded-lg border bg-card p-6 shadow-sm">
+                  <p className="text-gray-600 font-body">History section — add form fields as needed.</p>
+                </div>
+              )}
+              {activeTab === 'impact' && (
+                <div className="rounded-lg border bg-card p-6 shadow-sm">
+                  <p className="text-gray-600 font-body">Impact section — add form fields as needed.</p>
+                </div>
+              )}
+              {activeTab === 'team' && (
+                <div className="rounded-lg border bg-card p-6 shadow-sm">
+                  <p className="text-gray-600 font-body">Team section — add form fields as needed.</p>
+                </div>
+              )}
+              {activeTab === 'links' && (
+                <div className="rounded-lg border bg-card p-6 shadow-sm">
+                  <p className="text-gray-600 font-body">Links section — add form fields as needed.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}

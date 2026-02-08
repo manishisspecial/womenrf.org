@@ -9,6 +9,20 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        primary: '#1c75bc',
+        secondary: '#6B5B95',
+        card: 'var(--card, #ffffff)',
+        'card-foreground': 'var(--card-foreground, #1a1a1a)',
+        accent: 'var(--accent, #f3f4f6)',
+        'accent-foreground': 'var(--accent-foreground, #1a1a1a)',
+        input: 'var(--input, #e5e7eb)',
+        background: 'var(--background, #ffffff)',
+        ring: 'var(--ring, #1c75bc)',
+        'primary-foreground': 'var(--primary-foreground, #ffffff)',
+        muted: 'var(--muted, #f3f4f6)',
+        'muted-foreground': 'var(--muted-foreground, #6b7280)',
+        foreground: 'var(--foreground, #1a1a1a)',
+        'support-1': 'var(--support-1, #e8b4b8)',
         wrf: {
           purple: '#6B5B95',
           'purple-dark': '#5a4a84',
@@ -39,6 +53,8 @@ const config: Config = {
           'Segoe UI Symbol',
           'Noto Color Emoji',
         ],
+        heading: ['var(--font-heading)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        body: ['var(--font-body)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       maxWidth: {
         container: '1200px',

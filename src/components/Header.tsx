@@ -2,54 +2,16 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from '@/lib/TranslationContext';
 
-const MENU_SECTIONS = [
-  {
-    title: "Women's Rights First",
-    titleClass: 'text-wrf-purple',
-    links: [
-      { href: '/Founders', label: 'Founders' },
-      { href: '/Team', label: 'Team' },
-      { href: '/About', label: 'About us' },
-    ],
-  },
-  {
-    title: 'What we do',
-    titleClass: 'text-wrf-coral',
-    links: [
-      { href: '/ProgramPage?slug=legal-empowerment-international-accountability', label: 'Legal Empowerment and International Accountability' },
-      { href: '/ProgramPage?slug=peacebuilding-social-cohesion', label: 'Peace Building' },
-      { href: '/ProgramPage?slug=Digital-Transformation-and%20-Open%20-Gender%20-Data', label: 'Digital Transformation and Open Gender Data' },
-      { href: '/ProgramPage?slug=representation-advocacy', label: 'Representation and Advocacy' },
-    ],
-  },
-  {
-    title: 'Information',
-    titleClass: 'text-wrf-footer-mauve',
-    links: [
-      { href: '/FAQ', label: 'Questions and answers' },
-      { href: '/News', label: 'News and events' },
-      { href: '/Vacancies', label: 'Careers and vacancies' },
-      { href: '/PrivacyPolicy', label: 'Privacy policy' },
-    ],
-  },
-  {
-    title: 'Get involved',
-    titleClass: 'text-white',
-    links: [
-      { href: '/Partnership', label: 'Become a partner' },
-      { href: '/Volunteer', label: 'Become a volunteer' },
-      { href: '/Contact', label: 'Contact us' },
-    ],
-  },
-];
-
-const navLinks = [
-  { href: '/About', label: 'WRF' },
-  { href: '/News', label: 'News and updates' },
-  { href: '/Vacancies', label: 'Vacancies' },
-];
+const LOCALES = [
+  { code: 'en', label: 'ENG' },
+  { code: 'fa', label: 'فارسی/دری' },
+  { code: 'ps', label: 'پښتو' },
+] as const;
+type LocaleCode = (typeof LOCALES)[number]['code'];
 
 function ChevronDown({ open }: { open: boolean }) {
   return (
@@ -70,24 +32,119 @@ function ChevronDown({ open }: { open: boolean }) {
   );
 }
 
+function getPathWithoutLocale(pathname: string): string {
+  const segments = pathname.split('/').filter(Boolean);
+  const localeCodes = LOCALES.map((l) => l.code);
+  if (segments.length > 0 && localeCodes.includes(segments[0] as LocaleCode)) {
+    const rest = segments.slice(1);
+    return rest.length ? `/${rest.join('/')}` : '/';
+  }
+  return pathname || '/';
+}
+
+function getLocaleFromPath(pathname: string): LocaleCode {
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.length > 0 && (segments[0] === 'fa' || segments[0] === 'ps' || segments[0] === 'en')) {
+    return segments[0] as LocaleCode;
+  }
+  return 'en';
+}
+
 export default function Header() {
+  const pathname = usePathname();
+  const currentLocale = getLocaleFromPath(pathname);
+  const pathWithoutLocale = getPathWithoutLocale(pathname);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [openAccordion, setOpenAccordion] = useState<number | null>(null);
+  const [adminData, setAdminData] = useState<Record<string, any> | null>(null);
+  const langDropdownDesktopRef = useRef<HTMLDivElement>(null);
+  const langDropdownMobileRef = useRef<HTMLDivElement>(null);
+  const { t, localePrefix: tLocalePrefix } = useTranslation();
+
+  const MENU_SECTIONS: { title: string; titleClass: string; links: { href: string; label: string }[] }[] = adminData?.megaColumns || [
+    {
+      title: t('header.menuSection.wrf.title'),
+      titleClass: 'text-wrf-purple',
+      links: [
+        { href: '/Founders', label: t('header.menuSection.wrf.founders') },
+        { href: '/Team', label: t('header.menuSection.wrf.team') },
+        { href: '/About', label: t('header.menuSection.wrf.about') },
+      ],
+    },
+    {
+      title: t('header.menuSection.whatWeDo.title'),
+      titleClass: 'text-wrf-coral',
+      links: [
+        { href: '/ProgramPage?slug=legal-empowerment-international-accountability', label: t('header.menuSection.whatWeDo.legal') },
+        { href: '/ProgramPage?slug=peacebuilding-social-cohesion', label: t('header.menuSection.whatWeDo.peace') },
+        { href: '/ProgramPage?slug=Digital-Transformation-and%20-Open%20-Gender%20-Data', label: t('header.menuSection.whatWeDo.digital') },
+        { href: '/ProgramPage?slug=representation-advocacy', label: t('header.menuSection.whatWeDo.advocacy') },
+      ],
+    },
+    {
+      title: t('header.menuSection.info.title'),
+      titleClass: 'text-wrf-footer-mauve',
+      links: [
+        { href: '/FAQ', label: t('header.menuSection.info.faq') },
+        { href: '/News', label: t('header.menuSection.info.news') },
+        { href: '/Vacancies', label: t('header.menuSection.info.vacancies') },
+        { href: '/PrivacyPolicy', label: t('header.menuSection.info.privacy') },
+      ],
+    },
+    {
+      title: t('header.menuSection.involved.title'),
+      titleClass: 'text-white',
+      links: [
+        { href: '/Partnership', label: t('header.menuSection.involved.partner') },
+        { href: '/Volunteer', label: t('header.menuSection.involved.volunteer') },
+        { href: '/Contact', label: t('header.menuSection.involved.contact') },
+      ],
+    },
+  ];
+
+  const navLinks: { href: string; label: string }[] = adminData?.navLinks || [
+    { href: '/About', label: t('header.nav.wrf') },
+    { href: '/News', label: t('header.nav.news') },
+    { href: '/Vacancies', label: t('header.nav.vacancies') },
+  ];
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Node;
+      const inDesktop = langDropdownDesktopRef.current?.contains(target);
+      const inMobile = langDropdownMobileRef.current?.contains(target);
+      if (!inDesktop && !inMobile) setLangDropdownOpen(false);
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/data/header', { cache: 'no-store' })
+      .then(r => r.json())
+      .then(d => { if (d && Object.keys(d).length > 0) setAdminData(d); })
+      .catch(() => {});
+  }, []);
 
   const closeMenu = () => {
     setMenuOpen(false);
     setOpenAccordion(null);
   };
 
+  const currentLocaleLabel = LOCALES.find((l) => l.code === currentLocale)?.label ?? 'ENG';
+  const otherLocales = LOCALES.filter((l) => l.code !== currentLocale);
+  const localePrefix = `/${currentLocale}`;
+
   return (
-    <header className="relative z-50 bg-white shadow-sm">
+    <header className="relative z-50 overflow-visible bg-white shadow-sm">
       <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-32 items-center justify-between">
+        <div className="flex h-32 items-center justify-between gap-4">
           <div className="shrink-0">
-            <Link href="/" className="block">
+            <Link href={localePrefix === '/en' ? '/en' : localePrefix} className="block">
               <Image
-                src="/logo.jpg"
-                alt="Women's Rights First"
+                src={adminData?.logoUrl || '/logo.jpg'}
+                alt={t('header.logo.alt')}
                 width={240}
                 height={96}
                 className="h-24 w-auto max-w-xs object-contain"
@@ -96,12 +153,12 @@ export default function Header() {
             </Link>
           </div>
 
-          <div className="hidden items-center gap-8 lg:flex">
-            <nav className="flex items-center gap-6">
+          <div className="hidden min-w-0 flex-1 items-center justify-end gap-4 lg:flex lg:gap-6">
+            <nav className="flex min-w-0 items-center gap-3 lg:gap-6" aria-label="Main navigation">
               {navLinks.map(({ href, label }) => (
                 <Link
                   key={href}
-                  href={href}
+                  href={`${localePrefix}${href}`}
                   className="text-sm font-bold uppercase tracking-wider text-wrf-black transition-colors hover:text-wrf-purple"
                 >
                   {label}
@@ -109,18 +166,18 @@ export default function Header() {
               ))}
             </nav>
 
-            <form className="ml-4 flex w-64 items-center lg:ml-8" role="search" onSubmit={(e) => e.preventDefault()}>
-              <div className="relative w-full">
+            <form className="flex w-40 shrink-0 items-center lg:w-52" role="search" onSubmit={(e) => e.preventDefault()}>
+              <div className="relative w-full min-w-0">
                 <input
                   type="search"
-                  placeholder="Search..."
-                  aria-label="Search"
+                  placeholder={adminData?.searchPlaceholder || t('header.search.placeholder')}
+                  aria-label={t('header.search.label')}
                   className="h-11 w-full rounded-none border border-black bg-white pl-4 pr-12 text-sm text-gray-900 placeholder:text-gray-500 focus:border-wrf-purple focus:outline-none focus:ring-2 focus:ring-wrf-purple/20 focus:ring-offset-0"
                 />
                 <button
                   type="submit"
                   className="absolute inset-y-0 right-0 flex items-center bg-wrf-purple px-4 text-white transition-colors hover:bg-wrf-purple-dark"
-                  aria-label="Search"
+                  aria-label={t('header.search.label')}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="11" cy="11" r="8" />
@@ -131,16 +188,55 @@ export default function Header() {
             </form>
 
             <Link
-              href="/Donate"
-              className="inline-flex h-12 items-center justify-center whitespace-nowrap rounded-none bg-wrf-coral px-5 py-2 text-sm font-bold uppercase tracking-wider text-white transition-colors hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wrf-coral focus-visible:ring-offset-2"
+              href={`${localePrefix}/${adminData?.donationButtonLink || 'Donate'}`}
+              className="inline-flex h-12 shrink-0 items-center justify-center whitespace-nowrap rounded-none bg-wrf-coral px-4 py-2 text-sm font-bold uppercase tracking-wider text-white transition-colors hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wrf-coral focus-visible:ring-offset-2 lg:px-5"
             >
-              Donate Now
+              {adminData?.donationButtonText || t('header.donate')}
             </Link>
+
+            <div className="relative shrink-0" ref={langDropdownDesktopRef}>
+              <button
+                id="desktopLangToggleBtn"
+                type="button"
+                className="flex h-12 flex-row items-center justify-center gap-2 rounded-full bg-primary px-4 pe-4 text-base font-bold text-white lg:px-5 lg:text-lg"
+                aria-expanded={langDropdownOpen}
+                aria-haspopup="true"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setLangDropdownOpen((prev) => !prev);
+                }}
+              >
+                <span>{currentLocaleLabel}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`shrink-0 transition-transform ${langDropdownOpen ? 'rotate-180' : ''}`}>
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+              <div
+                id="desktopLangDropdown"
+                role="menu"
+                aria-hidden={!langDropdownOpen}
+                className="absolute right-0 top-full z-[100] mt-1 min-w-[180px] rounded-md border border-gray-200 bg-white py-2 shadow-lg"
+                style={{ display: langDropdownOpen ? 'block' : 'none' }}
+              >
+                {otherLocales.map((loc) => (
+                  <Link
+                    key={loc.code}
+                    href={loc.code === 'en' ? `/en${pathWithoutLocale}` : `/${loc.code}${pathWithoutLocale}`}
+                    role="menuitem"
+                    className="block px-4 py-3 font-medium transition-colors first:rounded-t-md hover:bg-slate-100"
+                    onClick={() => setLangDropdownOpen(false)}
+                  >
+                    {loc.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
 
             <button
               type="button"
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-none bg-wrf-black text-white transition-colors hover:opacity-90"
-              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              aria-label={menuOpen ? t('header.menu.close') : t('header.menu.open')}
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen(!menuOpen)}
             >
@@ -160,13 +256,44 @@ export default function Header() {
           </div>
 
           <div className="flex items-center gap-4 lg:hidden">
-            <Link href="/Donate" className="inline-flex h-10 items-center justify-center rounded-none bg-wrf-coral px-4 text-xs font-bold uppercase tracking-wider text-white">
-              Donate
+            <Link href={`${localePrefix}/${adminData?.donationButtonLink || 'Donate'}`} className="inline-flex h-10 items-center justify-center rounded-none bg-wrf-coral px-4 text-xs font-bold uppercase tracking-wider text-white">
+              {adminData?.donationButtonText || t('header.donateMobile')}
             </Link>
+            <div className="relative" ref={langDropdownMobileRef}>
+              <button
+                type="button"
+                className="flex h-10 flex-row items-center justify-center gap-1 rounded-full bg-primary px-4 text-sm font-bold text-white"
+                aria-expanded={langDropdownOpen}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setLangDropdownOpen((prev) => !prev);
+                }}
+              >
+                <span>{currentLocaleLabel}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={langDropdownOpen ? 'rotate-180' : ''}>
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+              {langDropdownOpen && (
+                <div className="absolute right-0 top-full z-[100] mt-1 min-w-[160px] rounded-md border border-gray-200 bg-white py-2 shadow-lg" role="menu">
+                  {otherLocales.map((loc) => (
+                    <Link
+                      key={loc.code}
+                      href={loc.code === 'en' ? `/en${pathWithoutLocale}` : `/${loc.code}${pathWithoutLocale}`}
+                      className="block px-4 py-3 font-medium transition-colors first:rounded-t-md hover:bg-slate-100"
+                      onClick={() => setLangDropdownOpen(false)}
+                    >
+                      {loc.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
             <button
               type="button"
               className="flex h-12 w-12 items-center justify-center rounded-none bg-wrf-black text-white transition-colors hover:opacity-90"
-              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              aria-label={menuOpen ? t('header.menu.close') : t('header.menu.open')}
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen(!menuOpen)}
             >
@@ -206,7 +333,7 @@ export default function Header() {
                       {section.links.map((link) => (
                         <li key={link.href}>
                           <Link
-                            href={link.href}
+                            href={`${localePrefix}${link.href}`}
                             className="font-body text-white transition-colors hover:text-wrf-coral"
                             onClick={closeMenu}
                           >
@@ -219,21 +346,21 @@ export default function Header() {
                 ))}
               </div>
               <div className="flex items-center justify-between border-t border-gray-700 pt-8">
-                <p className="text-lg text-white">Ready to make a difference?</p>
+                <p className="text-lg text-white">{adminData?.megaFooterText || t('header.menu.cta')}</p>
                 <div className="flex items-center gap-6">
                   <Link
-                    href="/Donate"
+                    href={`${localePrefix}/${adminData?.megaFooterBtn1Link || 'Donate'}`}
                     className="flex h-12 items-center bg-wrf-coral px-6 font-bold uppercase tracking-wider text-white transition-opacity hover:opacity-90"
                     onClick={closeMenu}
                   >
-                    Donate
+                    {adminData?.megaFooterBtn1Text || t('header.donateMobile')}
                   </Link>
                   <Link
-                    href="/Contact"
+                    href={`${localePrefix}/${adminData?.megaFooterBtn2Link || 'Contact'}`}
                     className="flex h-12 items-center bg-wrf-purple px-6 font-bold uppercase tracking-wider text-white transition-opacity hover:opacity-90"
                     onClick={closeMenu}
                   >
-                    Get In Touch
+                    {adminData?.megaFooterBtn2Text || t('header.menu.getInTouch')}
                   </Link>
                 </div>
               </div>
@@ -259,7 +386,7 @@ export default function Header() {
                       {section.links.map((link) => (
                         <li key={link.href}>
                           <Link
-                            href={link.href}
+                            href={`${localePrefix}${link.href}`}
                             className="block text-white transition-colors hover:text-wrf-coral"
                             onClick={closeMenu}
                           >
@@ -273,18 +400,18 @@ export default function Header() {
               ))}
               <div className="space-y-4 pt-6">
                 <Link
-                  href="/Donate"
+                  href={`${localePrefix}/${adminData?.megaFooterBtn1Link || 'Donate'}`}
                   className="flex h-12 w-full items-center justify-center bg-wrf-coral font-bold uppercase tracking-wider text-white transition-opacity hover:opacity-90"
                   onClick={closeMenu}
                 >
-                  Donate
+                  {adminData?.megaFooterBtn1Text || t('header.donateMobile')}
                 </Link>
                 <Link
-                  href="/Contact"
+                  href={`${localePrefix}/${adminData?.megaFooterBtn2Link || 'Contact'}`}
                   className="flex h-12 w-full items-center justify-center bg-wrf-purple font-bold uppercase tracking-wider text-white transition-opacity hover:opacity-90"
                   onClick={closeMenu}
                 >
-                  Get In Touch
+                  {adminData?.megaFooterBtn2Text || t('header.menu.getInTouch')}
                 </Link>
               </div>
             </div>
